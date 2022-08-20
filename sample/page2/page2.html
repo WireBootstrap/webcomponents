@@ -1,0 +1,52 @@
+
+    <div id="content" class="p-4 p-md-5">
+
+        <app-header></app-header>
+
+        <h2 class="mb-4">Wire Components</h2>
+
+        <div class="alert alert-success">
+            <a href="https://www.wirebootstrap.com/products/webcomponents.html" target="_new">WireBootstrap for Web Components</a> brings two-day data binding, data services, and application event lifecycle hooks to Web Components for building data driven applications. 
+        </div>  
+        
+        <div class="row">
+
+             <div class="col-md-6">
+                <div class="alert alert-secondary">
+                    The following uses the <a href="https://docs.wirebootstrap.com/webcomponents/wire-webcomponent" target="_new">Wire Web Component</a> 
+                    to render WireBootstrap's <a href="https://docs.wirebootstrap.com/bootstrap/buttons" target="_new">Bootstrap Buttons</a> component.  
+                    The <code>dataset</code> sample dataset is passed directly to the buttons component and executed there before binding the results to the buttons.
+                </div> 
+            </div>  
+
+            <div class="col-md-6">
+                <div class="alert alert-secondary">
+                    <var>
+                        &lt;wire-component component="wire.bsButtons" wr-data="dataset" datamap-id="Product" datamap-label="Product"&gt&lt;wire-component&gt;                
+                    </var>                                       
+                </div> 
+            </div>  
+    
+        </div>
+                
+        <div class="row">        
+            <div class="col-md-12">
+                <div class="card border-secondary mb-3">
+                    <div class="card-header">Bootstrap Buttons</div>
+                    <div class="card-body text-secondary">
+                        <wire-component component="wire.bsButtons" wr-data="dataset" datamap-id="Product" datamap-label="Product"></wire-component>                     
+                    </div>
+            </div>         
+        </div>        
+        
+        <footer class="mt-4">
+            <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+            This page uses the <a href="https://colorlib.com/wp/template/bootstrap-sidebar-01" target="_blank">Bootstrap Sidebar Template</a>
+            created by <a href="https://colorlib.com" target="_blank">Colorlib.com</a>
+            <br>
+            Copyright &copy;
+            <script>document.write(new Date().getFullYear());</script> All rights reserved
+            <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+        </footer>
+
+    </div>      

@@ -1,0 +1,18 @@
+{
+  "name": "wire-tinybind",
+  "description": "WireBootstrap for Tinybind Sample",
+  "version": "1.0.13",
+  "license": "https://www.wirebootstrap.com/license/themes-license.html",
+  "dependencies": {
+    "@wirebootstrap/wire-bootstrap": "^2.1.9",
+    "grunt": "^1.4.1",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-uglify-es": "github:gruntjs/grunt-contrib-uglify#harmony",
+    "http-server": "^14.1.1",
+    "tinybind": "^1.0.0"
+  },
+  "scripts": {
+    "start": "http-server -o ./sample/page1/index.html"
+  }
+}

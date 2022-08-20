@@ -1,0 +1,56 @@
+
+<div id="content" class="p-4 p-md-5">
+
+    <app-header></app-header>
+
+    <h2 class="mb-4">Custom Web Components</h2>
+
+    <div class="alert alert-success">
+        <a href="https://www.wirebootstrap.com/products/webcomponents.html" target="_new">WireBootstrap for Web Components</a> brings two-day data binding, data services, and application event lifecycle hooks to Web Components for building data driven applications. 
+    </div>  
+    
+    <div class="row">
+
+            <div class="col-md-6">
+            <div class="alert alert-secondary">
+                The following is a sample button Web Component that binds to the <code>dataset</code> sample dataset.  
+                The dataset is executed in the page component and results are sent to the <code>my-button</code> component.
+                It displays values in the <code>Product</code> field in the button label.
+                It calls the <code>btnClick</code> event on the page when any button is clicked.
+            </div> 
+        </div>  
+
+        <div class="col-md-6">
+            <div class="alert alert-secondary">
+                <var>
+                    &lt;my-buttons wr-list="products" label="Product" wr-on-btn-click="btnClick"&gt&lt;my-buttons&gt;                
+                </var>                                       
+            </div> 
+        </div>  
+
+    </div>
+            
+    <div class="row">
+    
+        <div class="col-md-12">
+            <div class="card border-secondary mb-3">
+                <div class="card-header">My Buttons ({clicked})</div>
+                <div class="card-body text-secondary">
+                    <my-buttons wr-list="products" label="Product" wr-on-btn-click="btnClick"></my-buttons>                        
+                </div>
+            </div>
+        </div>
+        
+    </div>        
+        
+    <footer class="mt-4">
+        <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+        This page uses the <a href="https://colorlib.com/wp/template/bootstrap-sidebar-01" target="_blank">Bootstrap Sidebar Template</a>
+        created by <a href="https://colorlib.com" target="_blank">Colorlib.com</a>
+        <br>
+        Copyright &copy;
+        <script>document.write(new Date().getFullYear());</script> All rights reserved
+        <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+    </footer>
+
+</div>      
