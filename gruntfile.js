@@ -36,6 +36,10 @@ module.exports = function(grunt) {
             src: './README.md',
             dest: './dist/README.md'
           },
+          license: {
+            src: './LICENSE.md',
+            dest: './dist/LICENSE.md'
+          }          
         },
 
         uglify: {
