@@ -47,7 +47,7 @@ module.exports = function(grunt) {
               options: {
                   banner: '/* <%= pkg.description %> v<%= pkg.version %> ' +
                   '(<%= grunt.template.today("yyyy-mm-dd") %>) ' +
-                  '(c) 2016-<%= grunt.template.today("yyyy") %> Enterprise Blocks, Inc. ' +
+                  '(c) 2020-<%= grunt.template.today("yyyy") %> Enterprise Blocks, Inc. ' +
                   'License details: <%= pkg.license %> */'
               },
               files: {

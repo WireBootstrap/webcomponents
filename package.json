@@ -1,6 +1,6 @@
 {
-  "name": "wire-tinybind",
-  "description": "WireBootstrap for Tinybind Sample",
+  "name": "wire-webcomponents",
+  "description": "WireBootstrap for Web Components",
   "version": "1.0.14",
   "license": "https://www.wirebootstrap.com/license/themes-license.html",
   "dependencies": {

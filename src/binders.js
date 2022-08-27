@@ -6,7 +6,7 @@
 
 tinybind.binders['add-class'] = function (el, value) {
     if(value)
-        el.className = `${el.className} ${value}`
+    el.className = (el.className == "" ? value : `${el.className} ${value}`);
 }
 
 tinybind.binders['import-*'] = function (el, a, b) {
