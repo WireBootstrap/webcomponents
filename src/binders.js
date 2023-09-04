@@ -16,3 +16,48 @@ tinybind.binders['import-*'] = function (el, a, b) {
 
     el.setAttribute(this.arg, "[wr-import]|{0}|{1}|{2}".format(this.arg, name, this.keypath));
 }
+
+tinybind.binders['select2'] = {
+    publishes: true,
+    priority: 2000,
+    bind: function (el) {
+
+        const self = this;
+
+        $(el).on("select2:select select2:unselect", function () {
+            self.publish();
+        });
+
+    },
+    unbind: function (el) {
+        $(el).off("select2:select select2:unselect");
+    },
+    routine: function () {
+        // not implemented
+    }
+}
+
+
+//
+// Tinybind daterangepicker model binding
+//
+tinybind.binders['daterangepicker'] = {
+    publishes: true,
+    priority: 2000,
+    bind: function (el) {
+
+        const self = this;
+
+        $(el).on("apply.daterangepicker", function () {
+            self.publish();
+        });
+
+    },
+    unbind: function (el) {             
+        $(el).off("apply.daterangepicker");
+    },
+    routine: function () {
+        // not implemented
+    }
+}
+

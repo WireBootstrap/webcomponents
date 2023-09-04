@@ -1,7 +1,7 @@
 {
   "name": "wire-webcomponents",
   "description": "WireBootstrap for Web Components",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "license": "https://www.wirebootstrap.com/license/themes-license.html",
   "dependencies": {
     "@wirebootstrap/wire-bootstrap": "^2.1.9",
@@ -13,6 +13,7 @@
     "tinybind": "^1.0.0"
   },
   "scripts": {
-    "start": "http-server -o ./sample/page1/index.html"
+    "start": "http-server -o ./sample/page1/index.html",
+    "build": "grunt"
   }
 }

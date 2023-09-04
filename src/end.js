@@ -5,7 +5,8 @@
 //
 
 wire.ui.customElements = wire.ui.customElements || {
-    appReady: null
+    appReady: null,
+    useAppReady: false
 };
 
 

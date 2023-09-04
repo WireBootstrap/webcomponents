@@ -71,6 +71,18 @@ class WebComponent extends tinybind.Component {
         dispatchEvent(new Event("app-ready.wire"));
     }
 
+    wrUseAppReady(useAppReady) {
+        if (typeof useAppReady != "undefined") {
+            wire.ui.customElements.useAppReady = useAppReady;
+            wire.ui.customElements.appReady = false;
+        }
+        return wire.ui.customElements.useAppReady;
+    }
+
+    get wrIsAppReady() {
+        return (wire.ui.customElements.useAppReady ? wire.ui.customElements.appReady : true);
+    }    
+
     wrObjectChanged(obj, name) {
     }
 

@@ -9,17 +9,17 @@ module.exports = function(grunt) {
                 options: {
                     stripBanners: true,
                     separator: ''
-                },                
+                },
                 src: [
                     './src/configure.js',
                     './src/binders.js',
-                    '.src/adapters.js',
+                    './src/adapters.js',
                     './src/formatters.js',
                     './src/web-component.js',
                     './src/wire-component.js',
                     './src/end.js'
                     ],
-                dest: './dist/wire-webcomponents.dev.js'
+                dest: './dist-dev/wire-webcomponents.dev.js'
             }                             
         },
 
@@ -51,7 +51,7 @@ module.exports = function(grunt) {
                   'License details: <%= pkg.license %> */'
               },
               files: {
-                  './dist/wire-webcomponents.js': ['./dist/wire-webcomponents.dev.js']
+                  './dist/wire-webcomponents.js': ['./dist-dev/wire-webcomponents.dev.js']
               }
             } 
           }

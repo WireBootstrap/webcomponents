@@ -29,6 +29,20 @@ interface IWireWebComponent extends HTMLElement {
      * @param defaults Optional object containing default values for the attributes
      */
      wrAttributes(defaults?: any): any;
+    /**
+     * Transforms the attributes set on the component into an object
+     * @param useAppReady Use this parameter to tell downstream components to expect an wrSetAppReady callback
+     * @returns Boolean with the value of the property
+     */
+     wrUseAppReady(useAppReady?: boolean): boolean;
+     /**
+      * Returns app ready boolean state when using app initialization or always *true* if not
+      */
+     wrIsAppReady: boolean;
+     /**
+      * Returns the underlying component rendered inside the web component
+      */
+     wrComponent: IWireComponent     
 }
 
 interface IWireUi {  

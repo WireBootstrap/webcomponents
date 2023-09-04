@@ -1,10 +1,10 @@
 {
     "name": "@wirebootstrap/wire-webcomponents",
     "description": "WireBootstrap for Web Components",
-    "version": "1.0.14",
+    "version": "1.0.15",
     "license": "https://www.wirebootstrap.com/license/themes-license.html",
     "dependencies": {
-        "@wirebootstrap/wire": "^2.1.19",
+        "@wirebootstrap/wire": "^2.2.0",
         "tinybind": "^1.0.0"
     }   
   }

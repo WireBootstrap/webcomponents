@@ -29,7 +29,7 @@ tinybind.configure({
 
 tinybind.binders['add-class'] = function (el, value) {
     if(value)
-        el.className = `${el.className} ${value}`
+    el.className = (el.className == "" ? value : `${el.className} ${value}`);
 }
 
 tinybind.binders['import-*'] = function (el, a, b) {
@@ -40,9 +40,82 @@ tinybind.binders['import-*'] = function (el, a, b) {
     el.setAttribute(this.arg, "[wr-import]|{0}|{1}|{2}".format(this.arg, name, this.keypath));
 }
 
+tinybind.binders['select2'] = {
+    publishes: true,
+    priority: 2000,
+    bind: function (el) {
+
+        const self = this;
+
+        $(el).on("select2:select select2:unselect", function () {
+            self.publish();
+        });
+
+    },
+    unbind: function (el) {
+        $(el).off("select2:select select2:unselect");
+    },
+    routine: function () {
+        // not implemented
+    }
+}
+
+
+//
+// Tinybind daterangepicker model binding
+//
+tinybind.binders['daterangepicker'] = {
+    publishes: true,
+    priority: 2000,
+    bind: function (el) {
+
+        const self = this;
+
+        $(el).on("apply.daterangepicker", function () {
+            self.publish();
+        });
+
+    },
+    unbind: function (el) {             
+        $(el).off("apply.daterangepicker");
+    },
+    routine: function () {
+        // not implemented
+    }
+}
+
+
+
+//
+// Adaptors
+//
+
+tinybind.adapters['['] = {
+    observe: function (obj, keypath, callback) {
+        // not implmented
+    },
+    unobserve: function (obj, keypath, callback) {
+        // not implemented
+    },
+    get: function (obj, keypath) {
+        const index = +keypath.split("]")[0];
+        return obj[index];
+    },
+    set: function (obj, keypath, value) {
+        // not implemented
+    }
+}
+
 //
 // Formatters
 //
+
+tinybind.formatters.args = function (fn) {
+    let args = Array.prototype.slice.call(arguments, 1);
+    return function () {
+        return fn.apply(this, Array.prototype.concat.call(arguments[0], args));
+    }
+}            
 
 tinybind.formatters['property'] = function (obj, property) {
     if (obj)
@@ -125,6 +198,18 @@ class WebComponent extends tinybind.Component {
         dispatchEvent(new Event("app-ready.wire"));
     }
 
+    wrUseAppReady(useAppReady) {
+        if (typeof useAppReady != "undefined") {
+            wire.ui.customElements.useAppReady = useAppReady;
+            wire.ui.customElements.appReady = false;
+        }
+        return wire.ui.customElements.useAppReady;
+    }
+
+    get wrIsAppReady() {
+        return (wire.ui.customElements.useAppReady ? wire.ui.customElements.appReady : true);
+    }    
+
     wrObjectChanged(obj, name) {
     }
 
@@ -199,23 +284,33 @@ class WebComponent extends tinybind.Component {
 
 class WireWebComponent extends WebComponent {
 
-    _objChanged = null;
+    constructor() {
+        // queue if wrObjectChanged called before this component was added to the DOM
+        // or when waiting for app init to complete
+        this._objChanged = null;
+        this._component = null;
+    }
 
     connectedCallback() {
 
         super.connectedCallback();
 
-        // wrObjectChanged called before this component was added to the DOM
-        // so render now
-        if(this._objChanged)
-            this._render(this._objChanged.obj, this._objChanged.name);
+        if (this._objChanged && super.wrIsAppReady)
+            this._render(this._objChanged);
+    }
+
+    async wrAppReady() {
+
+        if (this._objChanged)
+            this._render(this._objChanged);
+
     }
 
     wrObjectChanged(obj, name) {       
         
         super.wrObjectChanged(obj, name);
        
-        if(this.firstChild)
+        if (this.firstChild && super.wrIsAppReady)
             this._render(obj, name);
         else
             this._objChanged = {obj: obj, name: name};
@@ -225,23 +320,29 @@ class WireWebComponent extends WebComponent {
         
         let config = this.wrAttributes()
 
-        if(name == "config")
-            config = wire.merge(config, obj);
+        if(obj.name == "config")
+            config = wire.merge(config, obj.obj);
 
-        if(name == "data")
-            config.data = obj;
+        if(obj.name == "data")
+            config.data = obj.obj;
         
         if(!config.component) 
             throw `Missing 'component' attribute on ${this.name}`;
         else {
 
-            let cmp = wire.ui.Component.create(config.component);        
+            this._component = wire.ui.Component.create(config.component);        
 
-            cmp.render(this.firstChild, config);
+            this._component.render(this.firstChild, config);
 
         }
 
+        this._objChanged = null;
+
     }
+
+    get wrComponent() {
+        return this._component;
+    }    
     
     static get properties() {
         return {
@@ -260,7 +361,8 @@ class WireWebComponent extends WebComponent {
 //
 
 wire.ui.customElements = wire.ui.customElements || {
-    appReady: null
+    appReady: null,
+    useAppReady: false
 };
 
 

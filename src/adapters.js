@@ -19,3 +19,4 @@ tinybind.adapters['['] = {
         // not implemented
     }
 }
+
