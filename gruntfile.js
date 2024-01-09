@@ -11,6 +11,7 @@ module.exports = function(grunt) {
                     separator: ''
                 },
                 src: [
+                    './tinybind/tinybind.js',
                     './src/configure.js',
                     './src/binders.js',
                     './src/adapters.js',

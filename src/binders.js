@@ -26,14 +26,21 @@ tinybind.binders['select2'] = {
 
         $(el).on("select2:select select2:unselect", function () {
             self.publish();
-        });
+        });      
 
     },
     unbind: function (el) {
         $(el).off("select2:select select2:unselect");
+        $(el).off("databind.wire");
     },
-    routine: function () {
-        // not implemented
+    routine: function (el, value) {
+
+        $(el).on("databind.wire", (e, d) => {
+            debugger
+            if (typeof value != "undefined")
+                $(el).val(value).trigger("change")
+        });
+
     }
 }
 

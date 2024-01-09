@@ -1,7 +1,7 @@
 {
     "name": "@wirebootstrap/wire-webcomponents",
     "description": "WireBootstrap for Web Components",
-    "version": "1.0.15",
+    "version": "1.0.17",
     "license": "https://www.wirebootstrap.com/license/themes-license.html",
     "dependencies": {
         "@wirebootstrap/wire": "^2.2.0",

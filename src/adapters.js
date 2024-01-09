@@ -11,9 +11,10 @@ tinybind.adapters['['] = {
     unobserve: function (obj, keypath, callback) {
         // not implemented
     },
-    get: function (obj, keypath) {
-        const index = +keypath.split("]")[0];
-        return obj[index];
+    get: function (obj, keypath) {        
+        let key = keypath.split("]")[0].replaceAll('"', "").replaceAll("'", "");
+        key =  (wire.isNumeric(key) ? +key : key);
+        return obj[key];
     },
     set: function (obj, keypath, value) {
         // not implemented

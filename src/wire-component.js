@@ -7,10 +7,12 @@
 class WireWebComponent extends WebComponent {
 
     constructor() {
+        super();
         // queue if wrObjectChanged called before this component was added to the DOM
         // or when waiting for app init to complete
         this._objChanged = null;
         this._component = null;
+        this._firstChild = null;
     }
 
     connectedCallback() {
@@ -39,22 +41,27 @@ class WireWebComponent extends WebComponent {
     }
         
     _render(obj, name) {
-        
-        let config = this.wrAttributes()
+       
+        let config = this.wrAttrib;
 
-        if(obj.name == "config")
-            config = wire.merge(config, obj.obj);
+        config = config || {};
 
-        if(obj.name == "data")
-            config.data = obj.obj;
-        
+        if(name == "config")
+            config = wire.merge(config, obj);
+        else
+            config[name] = obj;
+
         if(!config.component) 
             throw `Missing 'component' attribute on ${this.name}`;
         else {
 
-            this._component = wire.ui.Component.create(config.component);        
+            if(!this._component)
+                this._component = wire.ui.Component.create(config.component);        
 
-            this._component.render(this.firstChild, config);
+            if(!this._firstChild)
+                this._firstChild = this.firstChild;
+
+            this._component.render(this._firstChild, config);
 
         }
 
