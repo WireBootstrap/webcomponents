@@ -27,7 +27,7 @@ interface IWireWebComponent extends HTMLElement {
   /**
    * Callback post application initialization
    */    
-  wrAppReady(ev?: Event): void;
+  wrAppReady(): Promise<void>;
   /**
    * Shared application state object for components
    */
@@ -53,7 +53,12 @@ interface IWireWebComponent extends HTMLElement {
    /**
     * Returns the underlying component rendered inside the web component
     */
-   wrComponent: IWireComponent     
+   wrComponent: IWireComponent;
+   /**
+   * Renders the component and returns the underlying component
+   * @param config The configuration for the component.  Will be merged with any attributes set on the element.
+   */   
+   wrRender(config: any): IWireComponent;   
 }
 
 interface IWireUi {  

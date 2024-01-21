@@ -40,6 +40,13 @@ class WireWebComponent extends WebComponent {
             this._objChanged = {obj: obj, name: name};
     }
         
+    wrRender(config) {
+
+        this._render(config, "config");
+        return this.wrComponent;
+
+    }
+
     _render(obj, name) {
        
         let config = this.wrAttrib;
@@ -47,7 +54,7 @@ class WireWebComponent extends WebComponent {
         config = config || {};
 
         if(name == "config")
-            config = wire.merge(config, obj);
+            config = wire.merge(obj, config);
         else
             config[name] = obj;
 

@@ -23,7 +23,7 @@ class WebComponent extends tinybind.Component {
             let url = this.constructor.templateUrl;            
 
             if(!url && this.templateUrl) 
-                url = this.templateUrl();
+                url = (typeof this.templateUrl == "string") ? this.templateUrl : this.templateUrl();
 
             if (url) {
                 if(typeof url == "function")
@@ -55,6 +55,7 @@ class WebComponent extends tinybind.Component {
             // bubble/forward the observable change to inheriting class
             // after setting dirty flag on the base class
             const options = {wr: { publishCallback: (obj, prop, value)=> { 
+                debugger
                 new wire.data.DataEvent("object-changed.wr").row(obj).cell(prop, value) .raise();
                 this.wrObjectChanged.call(this, obj, prop, value);
             }}};
@@ -230,7 +231,9 @@ class WebComponent extends tinybind.Component {
 
                 const num = attr.name.split("-").length;
 
-                const json = `{"${attr.name.replaceAll('-', '":{"')}":"${attr.value}"${'}'.repeat(num)}`;
+                const f = wire.isBoolean;
+
+                const json = `{"${attr.name.replaceAll('-', '":{"')}":${f(attr.value)?'':'"'}${attr.value}${f(attr.value)?'':'"'}${'}'.repeat(num)}`;
 
                 wire.merge(cfg, JSON.parse(json));
 

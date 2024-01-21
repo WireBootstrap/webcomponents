@@ -4,6 +4,7 @@
 // Binders
 //
 
+
 tinybind.binders['add-class'] = function (el, value) {
     if(value)
     el.className = (el.className == "" ? value : `${el.className} ${value}`);
@@ -68,3 +69,31 @@ tinybind.binders['daterangepicker'] = {
     }
 }
 
+
+// NOT NEEDED ? Create an anchor and style as button (wr-href="someurl")
+// <a wr-navigate="someUrl"></a>
+tinybind.binders['navigate'] = {
+    function: true,
+    priority: 1000,
+    unbind: function unbind(el) {
+      if (this._navigate) {
+        el.removeEventListener("click", this._navigate);
+      }
+    },
+    routine: function routine(el, value) {
+  
+      if (this._navigate) {
+        el.removeEventListener("click", this.handler);
+      }
+  
+      if (value) {
+  
+        this._navigate = function () {
+          window.open(value, "_new");
+        }
+  
+        el.addEventListener("click", this._navigate);
+      }
+      
+    }
+}
