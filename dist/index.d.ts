@@ -3,10 +3,15 @@
  */
 interface IWireWebComponent extends HTMLElement {
   new(): IWireWebComponent;
+  new(config: any): IWireWebComponent;
   /**
    * Native window method for raising Events
    */         
   //dispatchEvent(event: Event); needed?
+  /**
+   * Resets the bindings for the web component
+   */         
+  wrUpdateBind(): void;
   /**
    * Web Component's native callback method
    */         
@@ -15,7 +20,7 @@ interface IWireWebComponent extends HTMLElement {
    * Called when observable component property of 'object' type has been changed
    * This is the object version of attributeChangedCallback used for primitive types
    */      
-  wrObjectChanged(obj?: any, name?: string): void;
+  wrObjectChanged(obj?: any, name?: string, value?: any): void;
   /**
    * Called by root/app component telling child components initialization has been completed
    */      
@@ -23,12 +28,19 @@ interface IWireWebComponent extends HTMLElement {
   /**
    * Callback post application initialization
    */    
-  wrAppReady(ev?: Event): void;
+  wrAppReady(): Promise<void>;
   /**
-   * Transforms the attributes set on the component into an object
-   * @param defaults Optional object containing default values for the attributes
+   * Shared application state object for components
    */
-   wrAttributes(defaults?: any): any;
+  wrApp: any;
+  /**
+   * Static version of wrApp
+   */
+  wrGetApp(): any;
+  /**
+   * Object transform for attributes set on the component
+   */
+   wrAttrib: any;         
   /**
    * Transforms the attributes set on the component into an object
    * @param useAppReady Use this parameter to tell downstream components to expect an wrSetAppReady callback
@@ -42,7 +54,12 @@ interface IWireWebComponent extends HTMLElement {
    /**
     * Returns the underlying component rendered inside the web component
     */
-   wrComponent: IWireComponent     
+   wrComponent: IWireComponent;
+   /**
+   * Renders the component and returns the underlying component
+   * @param config The configuration for the component.  Will be merged with any attributes set on the element.
+   */   
+   wrRender(config?: any): IWireComponent;   
 }
 
 interface IWireUi {  

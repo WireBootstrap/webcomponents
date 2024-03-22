@@ -20,13 +20,13 @@ class WireWebComponent extends WebComponent {
         super.connectedCallback();
 
         if (this._objChanged && super.wrIsAppReady)
-            this._render(this._objChanged);
+            this._render(this._objChanged.obj, this._objChanged.name);
     }
 
     async wrAppReady() {
 
         if (this._objChanged)
-            this._render(this._objChanged);
+            this._render(this._objChanged.obj, this._objChanged.name);
 
     }
 

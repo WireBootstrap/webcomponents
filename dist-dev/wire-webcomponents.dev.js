@@ -534,8 +534,15 @@
 
     _proto.sync = function sync() {
       if (this.observer) {
+
         this.model = this.observer.target;
         this.set(this.observer.value());
+
+        // wire callback for view sync subscription        
+        if(this.view.options.wr && this.view.options.wr.syncCallbackReady && this.view.options.wr.syncCallback && this.observer.target){
+          this.view.options.wr.syncCallback.apply(this.observer.obj, [this.observer.target, this.observer.key.path, this.observer.value()]);
+        }
+
       } else {
         this.set(this.value);
       }
@@ -561,9 +568,6 @@
         }, this.getValue(this.el));
 
         this.observer.setValue(value);
-        
-        if(this.view.options.wr && this.view.options.wr.publishCallback && this.observer.target)
-            this.view.options.wr.publishCallback.apply(this.observer.obj, [this.observer.target, this.observer.key.path, value]);
 
       }
     } // Subscribes to the model for changes at the specified keypath. Bi-directional
@@ -1565,6 +1569,7 @@ tinybind.configure({
 // Binders
 //
 
+
 tinybind.binders['add-class'] = function (el, value) {
     if(value)
     el.className = (el.className == "" ? value : `${el.className} ${value}`);
@@ -1587,14 +1592,21 @@ tinybind.binders['select2'] = {
 
         $(el).on("select2:select select2:unselect", function () {
             self.publish();
-        });
+        });      
 
     },
     unbind: function (el) {
         $(el).off("select2:select select2:unselect");
+        $(el).off("databind.wire");
     },
-    routine: function () {
-        // not implemented
+    routine: function (el, value) {
+
+        $(el).on("databind.wire", (e, d) => {
+            debugger
+            if (typeof value != "undefined")
+                $(el).val(value).trigger("change")
+        });
+
     }
 }
 
@@ -1623,6 +1635,33 @@ tinybind.binders['daterangepicker'] = {
 }
 
 
+// NOT NEEDED ? Create an anchor and style as button (wr-href="someurl")
+// <a wr-navigate="someUrl"></a>
+tinybind.binders['navigate'] = {
+    function: true,
+    priority: 1000,
+    unbind: function unbind(el) {
+      if (this._navigate) {
+        el.removeEventListener("click", this._navigate);
+      }
+    },
+    routine: function routine(el, value) {
+  
+      if (this._navigate) {
+        el.removeEventListener("click", this.handler);
+      }
+  
+      if (value) {
+  
+        this._navigate = function () {
+          window.open(value, "_new");
+        }
+  
+        el.addEventListener("click", this._navigate);
+      }
+      
+    }
+}
 
 //
 // Adaptors
@@ -1635,25 +1674,43 @@ tinybind.adapters['['] = {
     unobserve: function (obj, keypath, callback) {
         // not implemented
     },
-    get: function (obj, keypath) {
-        const index = +keypath.split("]")[0];
-        return obj[index];
+    get: function (obj, keypath) {        
+        let key = keypath.split("]")[0].replaceAll('"', "").replaceAll("'", "");
+        key =  (wire.isNumeric(key) ? +key : key);
+        return obj[key];
     },
     set: function (obj, keypath, value) {
         // not implemented
     }
 }
 
+
 //
 // Formatters
 //
 
+//item | exp 'Edit {Name}' | -> two way-> watch item.Name
+// <div wr-add-class="wrAttrib | exp '=`panel-${$obj.color||'inverse'}`'" class="panel">
+tinybind.formatters.exp = function(obj, exp) {
+    
+    if(obj) 
+        return `=(${exp})`.eval(obj);
+    else
+        return "";
+
+}
+
 tinybind.formatters.args = function (fn) {
     let args = Array.prototype.slice.call(arguments, 1);
     return function () {
-        return fn.apply(this, Array.prototype.concat.call(arguments[0], args));
+      // ev, data (from tinybind), arg1, arg2, ...
+      // async events loose all but second parameter so adding to data
+      const data = arguments[1];
+      data.args = args;
+      data.el = this;
+      return fn.apply(this, Array.prototype.concat.call(arguments[0], data, ...args));
     }
-}            
+  }          
 
 tinybind.formatters['date'] = function (dte, locale) {    
     if (dte)
@@ -1672,16 +1729,22 @@ tinybind.formatters['property'] = function (obj, property) {
         return "";
     }
 }
-
-
 //
 // Web component
 //
 class WebComponent extends tinybind.Component {
 
+    constructor(props){
+      super();
+      this._connectedCallbackHasRun = false;
+      if(props)
+        this._wrProps = props;
+    }
+
     wrUpdateBind() {
         if(this.__tinybindView) {
             this.__tinybindView.unbind();
+            const nodes = this.constructor.__templateEl.content.cloneNode(true);
             this.__tinybindView.bind(nodes, this, options);
         }
     }
@@ -1690,129 +1753,256 @@ class WebComponent extends tinybind.Component {
     // Handle attach life-cycle event
     //
     connectedCallback() {
-        
-        const _templateUrl = (cb) => {
+          
+        const _getTemplate = (fn, fn2) => {
+
+            let v = (fn? fn.call(this) : null);
+
+            if(v)
+              return v;
+            else
+              if(fn2) {
+                if(typeof fn2 == "function")
+                  return fn2.call(this);
+                else
+                  return fn2;
+              }
+
+        }
+
+        const _config = (cb) => {
             
-            let url = this.constructor.templateUrl;            
+          const url = _getTemplate(this.configUrl, this.constructor.configUrl);
+          
+          if(url) {         
+                      
+              fetch(url)
+                  .then(response => {
+                      if (response.ok)
+                          return response.json();
+                      else {
+                          console.log("Unable to load configuration from {0}".format(url));
+                          throw response;
+                      }
+                  })
+                  .then(config => {                
+                      if(config){
+                          if(this._wrProps){
+                              wire.merge(config, this._wrProps);
+                              this._wrProps = config;
+                          }
+                          else
+                              this._wrProps = config;   
+                      }
+                      cb();
+                  })
+                  .catch(error => {
+                      console.log("Unable to load configuration from {0}".format(url));
+                      throw error;
+                  });
+          }
+          else cb();
 
-            if(!url && this.templateUrl) 
-                url = this.templateUrl();
+        }
 
-            if (url) {
-                if(typeof url == "function")
-                    url = url();
+        const _style = (cb) => {
+            
+            const setStyle = (style) => {
+
+                const tag = document.createElement("style");
+
+                tag.append(style);
+
+                this.prepend(tag);
+
+                cb();
+
+            }
+
+            const url = _getTemplate(this.styleUrl, this.constructor.styleUrl);
+
+            if(url) {                
                 fetch(url)
                     .then(response => {
                         if (response.ok)
                             return response.text();
                         else {
-                            console.log("Unable to load template from {0}".format(url));
+                            console.log("Unable to load styles from {0}".format(url));
                             throw response;
                         }
                     })
-                    .then(template => {
-                        this.constructor.__templateEl.innerHTML = template;
-                        cb();
+                    .then(style => {                        
+                        setStyle(style);
                     })
                     .catch(error => {
-                        console.log("Unable to load template from {0}".format(url));
+                        console.log("Unable to load styles from {0}".format(url));
                         throw error;
                     });
             }
-            else
-                cb();
+            else cb();
+
+        }
+
+        const _templateUrl = (cb) => {
+            
+            const url = _getTemplate(this.templateUrl, this.constructor.templateUrl);
+
+            fetch(url)
+                .then(response => {
+                    if (response.ok)
+                        return response.text();
+                    else {
+                        console.log("Unable to load template from {0}".format(url));
+                        throw response;
+                    }
+                })
+                .then(template => {
+                    this.constructor.__templateEl.innerHTML = template;
+                    cb();
+                })
+                .catch(error => {
+                    console.log("Unable to load template from {0}".format(url));
+                    throw error;
+                });
+        
         }
 
         const _bindTemplate = ()=> {
+            
+          _config(() => {
 
-            // bubble/forward the observable change to inheriting class
-            // after setting dirty flag on the base class
-            const options = {wr: { publishCallback: (obj, prop, value)=> { 
-                //this.wrDirty = true;
+              // call back when tinybind syncs model either way
+              // set sync function 
+              const viewOptions = {wr: { syncCallbackReady: false, syncCallback: (obj, prop, value)=> {        
+                  
+                  //new wire.data.DataEvent("object-changed.wr").row(obj).cell(prop, value) .raise();
+                  
+                // bubble/forward the observable change to inheriting class             
                 this.wrObjectChanged.call(this, obj, prop, value);
-            }}};
 
-            if(this.children.length == 0) { 
-                // simple append anb bind for template
-                //super.connectedCallback(); 
+              }}};
+              
+              if(this.children.length == 0) { 
+                  // simple append and bind for template
+                  //super.connectedCallback(); 
 
-                var nodes = this.constructor.__templateEl.content.cloneNode(true);
+                  var nodes = this.constructor.__templateEl.content.cloneNode(true);
 
-                this.__tinybindView = tinybind.bind(nodes, this, options);
+                  this.__tinybindView = tinybind.bind(nodes, this, viewOptions);
           
-                while (this.firstChild) {
+                  while (this.firstChild) {
                   this.removeChild(this.firstChild);
-                }
+                  }
           
-                this.appendChild(nodes);
+                  this.appendChild(nodes);
 
-            }           
-            else {
+              }           
+              else {
 
-                // preserve content/children inside the component if exists    
+                  // preserve content/children inside the component if exists    
 
-                let tmpl = null;
-                
-                if(this.templateContainer) {
-                    
-                    // content to be appended to a node in the template
-                    tmpl = this.constructor.__templateEl.content.cloneNode(true); 
+                  let tmpl = null;
+                  
+                  const container = _getTemplate(this.templateContainer, this.constructor.templateContainer);
 
-                    this.__tinybindView = tinybind.bind(tmpl, this, options);
-                        
-                    const children = this.children;
+                  if(container) {
+                      
+                  // content to be appended to a node in the template
+                  tmpl = this.constructor.__templateEl.content.cloneNode(true); 
 
-                    let parent = tmpl.querySelector(this.templateContainer);
-        
-                    if(parent) {
-            
-                        Array.from(this.children).forEach((child)=>{
-                            parent.appendChild(child);
-                        });
-                        
-                        this.replaceChildren(tmpl);
-            
-                    }
-                    else console.log(`templateContainer ${this.templateContainer} not found`); 
-                   
-                }
-                else {
-                    // ignore template, child content is the template                                   
-                    tmpl = this;                    
-                    this.__tinybindView = tinybind.bind(tmpl, this, options);
-                }                
-                
-            }
+                  this.__tinybindView = tinybind.bind(tmpl, this, viewOptions);
+                      
+                  const parent = tmpl.querySelector(container);
 
-            //
-            // App ready
-            //            
-            if (this.wrIsAppReady)
-                this.wrAppReady();
-            else
-                addEventListener('app-ready.wire', () => {
-                    this.wrAppReady();
-                });            
+                  if(parent) {
+  
+                      // drag/drop with existing content recursivly embed the same content inside each container
+                      let isSelf = false;
+                  
+                      Array.from(this.children).forEach(child=>{
+                          if(!isSelf)
+                              isSelf = child.querySelector(container);
+                          if(!isSelf)
+                              parent.appendChild(child);
+                      });
+                      
+                      if(!isSelf)
+                          this.replaceChildren(tmpl);                        
+                  }
+                  else console.log(`templateContainer ${container} not found`); 
+                  
+              }
+                  else {
+                      // ignore template, child content is the template                                   
+                      tmpl = this;                    
+                      this.__tinybindView = tinybind.bind(tmpl, this, viewOptions);
+                  }                
+                  
+              }
+              
+              _style(() => {
+
+                  // race condition using the element id, use this event level id
+                  new wire.Event("template-ready.webcomponent.wr").data({id: this.id}).raise();
+
+                  //
+                  // App ready
+                  // turn on sync (noise if left on during initial bindings)
+                  //            
+                  if (this.wrIsAppReady) {                     
+                      this.wrAppReady();
+                  }
+                  else
+                      addEventListener('app-ready.wr', () => {
+                          this.wrAppReady();
+                      });                                              
+              });
+
+          });
+
         }
+  
 
         //
         // Template processing
+        // this.x is this class, this.contructor.x is the override
         //
-        if(this.constructor.templateUrl || this.templateUrl)
+        const url = _getTemplate(this.templateUrl, this.constructor.templateUrl);
+        if(url)
             _templateUrl(() => {          
                 _bindTemplate();
             });
-        else
-            if(this.constructor.templateId) {
-                let tmpl = document.getElementById(this.constructor.templateId);                
+        else {
+            const id = _getTemplate(this.templateId, this.constructor.templateId);
+            if(id) {
+                let tmpl = document.getElementById(id);                
                 this.constructor.__templateEl.innerHTML = tmpl.innerHTML;
                 tmpl.remove();
                 _bindTemplate();
             }
-            else
-                _bindTemplate();
+            else {
+              if(typeof this.template == "function")
+                this.constructor.__templateEl.innerHTML = this.template();              
+              _bindTemplate();
+            }
+         }
+          
+         this._connectedCallbackHasRun = true;
+
+         dispatchEvent(new Event("connectedCallback.wr"));
           
     }   
+
+    async ensureConnectedCallback() {
+
+        return new Promise((cb) => {
+            if (this._connectedCallbackHasRun)
+              cb();
+            else
+              addEventListener('connectedCallback.wr', cb);  
+        });
+
+    }
 
     async attributeChangedCallback(name, oldValue, newValue) {
 
@@ -1824,8 +2014,22 @@ class WebComponent extends tinybind.Component {
 
             let d = await import(path);
 
-            this[prop] = d[name];
+            const obj = d[name];
 
+            // import file.js?id=10
+            const params = wire.location.path(path).params();
+
+            if(obj.eq && params.length) {
+
+                // add filters
+                params.forEach(param => {
+                    obj.eq(param.name, param.value);
+                });
+
+            }
+
+            this[prop] = obj;
+            
             this.wrObjectChanged(this[prop], prop);
         }
         else {
@@ -1841,13 +2045,8 @@ class WebComponent extends tinybind.Component {
     async wrAppReady() {
     }
 
-    wrSetAppReady(app) {
-
-        wire.ui.customElements.appReady = true;
-        wire.ui.customElements.appState = app;
-        
-        dispatchEvent(new Event("app-ready.wire"));
-
+    wrSetAppReady() {
+        dispatchEvent(new Event("app-ready.wr"));
     }
 
     wrUseAppReady(useAppReady) {
@@ -1858,6 +2057,14 @@ class WebComponent extends tinybind.Component {
         return wire.ui.customElements.useAppReady;
     }
 
+    wrEventReady() {
+      new wire.ui.Component().eventReady({source: this, element: this});
+    }
+
+    wrEventDataBind(data) {
+      new wire.ui.Component().eventDataBind({source: this, element: this, data: data});
+    }
+
     get wrIsAppReady() {
         return (wire.ui.customElements.useAppReady ? wire.ui.customElements.appReady : true);
     }    
@@ -1865,8 +2072,21 @@ class WebComponent extends tinybind.Component {
     get wrApp(){
         return wire.ui.customElements.appState;
     }
-    
+  
+    set wrApp(app){
+      wire.ui.customElements.appReady = true;
+      wire.ui.customElements.appState = app;
+    }
+
+    static wrGetApp(){
+      return wire.ui.customElements.appState;
+    }
+  
     wrObjectChanged(obj, name) {
+    }
+
+    get wrProps(){
+      return this.wrAttrib;
     }
 
     get wrAttrib() {
@@ -1881,21 +2101,26 @@ class WebComponent extends tinybind.Component {
 
             const attr = this.attributes[i];
 
-            if (attr.value.indexOf("wr-") == -1) {
+            //if (attr.value.indexOf("wr-") == -1) {
 
                 const num = attr.name.split("-").length;
 
-                const json = `{"${attr.name.replaceAll('-', '":{"')}":"${attr.value}"${'}'.repeat(num)}`;
+                const f = wire.isBoolean;
 
+                const json = `{"${attr.name.replaceAll('-', '":{"')}":${f(attr.value)?'':'"'}${attr.value}${f(attr.value)?'':'"'}${'}'.repeat(num)}`;
+                
                 wire.merge(cfg, JSON.parse(json));
 
-            }
+            //}
 
         }
 
         cfg = wire.merge(this.constructor.propertyDefaults, cfg);
 
-        return cfg;
+        if(this._wrProps)
+            return wire.merge(this._wrProps, cfg);
+        else
+            return cfg;
 
     }
     
@@ -1910,13 +2135,21 @@ class WebComponent extends tinybind.Component {
         return "<div></div>";
     }
 
-    static get templateId() {
-        return null;
+    templateUrl() {
+      return null;
     }
 
-    static get templateContainer() {
-        return null;
+    templateId() {
+      return null;
     }
+
+    templateContainer() {
+      return null;
+    }
+
+    styleUrl() {
+      return null;
+    }    
 
 }
 
@@ -1940,13 +2173,13 @@ class WireWebComponent extends WebComponent {
         super.connectedCallback();
 
         if (this._objChanged && super.wrIsAppReady)
-            this._render(this._objChanged);
+            this._render(this._objChanged.obj, this._objChanged.name);
     }
 
     async wrAppReady() {
 
         if (this._objChanged)
-            this._render(this._objChanged);
+            this._render(this._objChanged.obj, this._objChanged.name);
 
     }
 
@@ -1960,6 +2193,13 @@ class WireWebComponent extends WebComponent {
             this._objChanged = {obj: obj, name: name};
     }
         
+    wrRender(config) {
+
+        this._render(config, "config");
+        return this.wrComponent;
+
+    }
+
     _render(obj, name) {
        
         let config = this.wrAttrib;
@@ -1967,7 +2207,7 @@ class WireWebComponent extends WebComponent {
         config = config || {};
 
         if(name == "config")
-            config = wire.merge(config, obj);
+            config = wire.merge(obj, config);
         else
             config[name] = obj;
 

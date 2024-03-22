@@ -3,6 +3,7 @@
  */
 interface IWireWebComponent extends HTMLElement {
   new(): IWireWebComponent;
+  new(props: any): IWireWebComponent;
   /**
    * Native window method for raising Events
    */         
@@ -14,7 +15,7 @@ interface IWireWebComponent extends HTMLElement {
   /**
    * Web Component's native callback method
    */         
-  connectedCallback(append?:boolean): void;
+  connectedCallback(): void;
   /**
    * Called when observable component property of 'object' type has been changed
    * This is the object version of attributeChangedCallback used for primitive types
@@ -28,6 +29,8 @@ interface IWireWebComponent extends HTMLElement {
    * Callback post application initialization
    */    
   wrAppReady(): Promise<void>;
+  wrEventReady(): void;
+  wrEventDataBind(data?: any): void;  
   /**
    * Shared application state object for components
    */
@@ -46,6 +49,10 @@ interface IWireWebComponent extends HTMLElement {
    * @returns Boolean with the value of the property
    */
    wrUseAppReady(useAppReady?: boolean): boolean;
+  /**
+   * Used this method to ensure that connectedCallback has been called on the component
+   */      
+  ensureConnectedCallback(): Promise<void>   
    /**
     * Returns app ready boolean state when using app initialization or always *true* if not
     */
@@ -58,7 +65,7 @@ interface IWireWebComponent extends HTMLElement {
    * Renders the component and returns the underlying component
    * @param config The configuration for the component.  Will be merged with any attributes set on the element.
    */   
-   wrRender(config: any): IWireComponent;   
+   wrRender(config?: any): IWireComponent;   
 }
 
 interface IWireUi {  

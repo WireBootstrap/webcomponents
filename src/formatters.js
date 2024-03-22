@@ -4,11 +4,11 @@
 //
 
 //item | exp 'Edit {Name}' | -> two way-> watch item.Name
-// <div wr-add-class="wrAttrib | exp '=(`panel-${$obj.color||'inverse'}`)'" class="panel">
+// <div wr-add-class="wrAttrib | exp '=`panel-${$obj.color||'inverse'}`'" class="panel">
 tinybind.formatters.exp = function(obj, exp) {
     
-    if(obj)
-        return exp.eval(obj);
+    if(obj) 
+        return `=(${exp})`.eval(obj);
     else
         return "";
 

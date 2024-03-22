@@ -534,8 +534,15 @@
 
     _proto.sync = function sync() {
       if (this.observer) {
+
         this.model = this.observer.target;
         this.set(this.observer.value());
+
+        // wire callback for view sync subscription        
+        if(this.view.options.wr && this.view.options.wr.syncCallbackReady && this.view.options.wr.syncCallback && this.observer.target){
+          this.view.options.wr.syncCallback.apply(this.observer.obj, [this.observer.target, this.observer.key.path, this.observer.value()]);
+        }
+
       } else {
         this.set(this.value);
       }
@@ -561,9 +568,6 @@
         }, this.getValue(this.el));
 
         this.observer.setValue(value);
-        
-        if(this.view.options.wr && this.view.options.wr.publishCallback && this.observer.target)
-            this.view.options.wr.publishCallback.apply(this.observer.obj, [this.observer.target, this.observer.key.path, value]);
 
       }
     } // Subscribes to the model for changes at the specified keypath. Bi-directional
@@ -1454,7 +1458,8 @@
     };
 
     _proto.disconnectedCallback = function disconnectedCallback() {
-      this.__tinybindView.unbind();
+      if(this.__tinybindView)
+        this.__tinybindView.unbind();
     };
 
     _proto.attributeChangedCallback = function attributeChangedCallback(name, old, value) {
@@ -1529,6 +1534,9 @@
     Observer.updateOptions(viewOptions);
     var view = new View(el, models, viewOptions);
     view.bind();
+    setTimeout(() => {
+      view.options.wr.syncCallbackReady = true;  
+    }, 100);    
     return view;
   };
 
